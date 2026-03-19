@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(npm install:*)",
+      "Bash(curl:*)",
+      "Bash(npx vite:*)",
+      "Bash(npm uninstall:*)"
+    ]
+  }
+}
