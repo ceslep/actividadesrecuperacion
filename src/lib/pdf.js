@@ -1,4 +1,4 @@
-import { institutionHeader, documentTitle } from './data.js'
+import { periodoLabel, anioLectivoLabel } from './data.js'
 
 function formatDate(dateStr) {
   try {
@@ -13,51 +13,16 @@ function formatDate(dateStr) {
 function generateHeaderHTML(escudoBase64) {
   return `
   <div class="header">
-    <div class="header-top">
-      <div class="header-left">
-        ${escudoBase64 ? `<img src="${escudoBase64}" alt="Escudo" class="escudo">` : ''}
-        <div class="header-info">
-          <p class="inst-name">INSTITUCIÓN EDUCATIVA OFICIAL</p>
-          <p class="inst-name-bold">INSTITUTO GUÁTICA</p>
-          <p class="inst-resolution">Resolución de aprobación N° 002879 del 13 de Diciembre de 2017</p>
-          <p class="inst-nit">NIT: 891.401.438-5 | DANE: 166318000537</p>
-        </div>
+    <div class="header-left">
+      ${escudoBase64 ? `<img src="${escudoBase64}" alt="Escudo" class="escudo">` : ''}
+      <div>
+        <p class="inst-name">INSTITUCIÓN EDUCATIVA OFICIAL <strong>INSTITUTO GUÁTICA</strong></p>
+        <p class="inst-detail">Res. 002879 del 13/Dic/2017 · NIT 891.401.438-5 · DANE 166318000537</p>
       </div>
     </div>
-    <div class="header-title">
-      <div class="title-bar">
-        <span class="title-text">ACTA DE ENTREGA</span>
-      </div>
-      <p class="subtitle">Plan de Mejoramiento Académico a Padres de Familia</p>
-      <p class="period">Tercer Período Académico - Año Lectivo 2026</p>
-    </div>
-  </div>
-  `
-}
-
-function generateFirmasHTML() {
-  return `
-  <div class="firmas-section">
-    <p class="firmas-title">Firmas de Recibo y Aceptación</p>
-    <div class="firmas">
-      <div class="firma">
-        <div class="firma-box">
-          <hr>
-          <p class="firma-label">Firma del Docente</p>
-        </div>
-      </div>
-      <div class="firma">
-        <div class="firma-box">
-          <hr>
-          <p class="firma-label">Firma del Coordinador</p>
-        </div>
-      </div>
-      <div class="firma">
-        <div class="firma-box">
-          <hr>
-          <p class="firma-label">Firma del Acudiente</p>
-        </div>
-      </div>
+    <div class="header-right">
+      <p class="title-text">ACTA DE ENTREGA</p>
+      <p class="title-sub">Plan de Mejoramiento · ${periodoLabel} · ${anioLectivoLabel}</p>
     </div>
   </div>
   `
@@ -66,61 +31,38 @@ function generateFirmasHTML() {
 function generateItemHTML(item, escudoBase64, includeHeader, isLast) {
   const fechaFormatted = formatDate(item.fecha_limite)
   const todayFormatted = formatDate(new Date().toISOString().split('T')[0])
-  
+
   return `
-  ${includeHeader ? generateHeaderHTML(escudoBase64) : ''}
-  
-  <div class="content-section">
-    <div class="info-card">
-      <div class="info-header">
-        <span class="info-icon">📋</span>
-        <span>Información del Registro</span>
-      </div>
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="info-label">Estudiante</span>
-          <span class="info-value highlight">${item.estudiante || ''}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Grupo</span>
-          <span class="info-value">${item.grupo || ''}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Asignatura</span>
-          <span class="info-value">${item.asignatura || ''}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Docente</span>
-          <span class="info-value">${item.docente || ''}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Fecha de Entrega</span>
-          <span class="info-value">${todayFormatted}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Fecha Límite</span>
-          <span class="info-value deadline">${fechaFormatted}</span>
-        </div>
-      </div>
+  <div class="page-item">
+    ${includeHeader ? generateHeaderHTML(escudoBase64) : ''}
+
+    <table class="info-table">
+      <tr>
+        <td class="info-cell"><span class="lbl">Estudiante</span><span class="val bold">${item.estudiante || ''}</span></td>
+        <td class="info-cell"><span class="lbl">Grupo</span><span class="val">${item.grupo || ''}</span></td>
+        <td class="info-cell"><span class="lbl">Asignatura</span><span class="val">${item.asignatura || ''}</span></td>
+      </tr>
+      <tr>
+        <td class="info-cell"><span class="lbl">Docente</span><span class="val">${item.docente || ''}</span></td>
+        <td class="info-cell"><span class="lbl">Fecha de Entrega</span><span class="val">${todayFormatted}</span></td>
+        <td class="info-cell"><span class="lbl">Fecha Límite</span><span class="val bold">${fechaFormatted}</span></td>
+      </tr>
+    </table>
+
+    <div class="plan-section">
+      <p class="plan-title">Plan de Mejoramiento / Refuerzo Académico</p>
+      <div class="plan-content">${item.plan || ''}</div>
     </div>
 
-    <div class="plan-card">
-      <div class="plan-header">
-        <span class="plan-icon">📚</span>
-        <span>Plan de Mejoramiento / Refuerzo Académico</span>
+    <div class="footer-zone">
+      <p class="notice"><strong>Nota:</strong> Este plan debe ser desarrollado por el estudiante en el período indicado con acompañamiento de los padres. Entregar en la fecha límite.</p>
+      <div class="firmas">
+        <div class="firma"><div class="firma-line"></div><p class="firma-label">Firma del Docente</p></div>
+        <div class="firma"><div class="firma-line"></div><p class="firma-label">Firma del Coordinador</p></div>
+        <div class="firma"><div class="firma-line"></div><p class="firma-label">Firma del Acudiente</p></div>
       </div>
-      <div class="plan-content">
-        ${item.plan || ''}
-      </div>
-    </div>
-
-    <div class="notice-box">
-      <p class="notice-title">⚠️ Importante</p>
-      <p class="notice-text">El presente plan de mejoramiento debe ser desarrollado por el estudiante durante el período indicado. Los padres de familia deben supervisar y acompañar el proceso de realización de las actividades propuestas. La entrega se realizará en la fecha límite establecida.</p>
     </div>
   </div>
-
-  ${generateFirmasHTML()}
   ${!isLast ? '<div class="page-break"></div>' : ''}
   `
 }
@@ -131,7 +73,7 @@ export function generatePDF(items, escudoBase64) {
   }
 
   const studentName = items[0]?.estudiante || ''
-  const itemsHTML = items.map((item, index) => 
+  const itemsHTML = items.map((item, index) =>
     generateItemHTML(item, escudoBase64, true, index === items.length - 1)
   ).join('')
 
@@ -141,245 +83,158 @@ export function generatePDF(items, escudoBase64) {
 <meta charset="utf-8">
 <title>Plan de Mejoramiento - ${studentName}</title>
 <style>
-  @page { size: letter; margin: 12mm; }
+  @page { size: letter; margin: 10mm 12mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  
-  body { 
-    font-family: 'Segoe UI', Arial, Helvetica, sans-serif; 
-    color: #1e293b; 
-    font-size: 11px; 
-    line-height: 1.5;
-    background: #fff;
+
+  html, body {
+    font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+    color: #222;
+    font-size: 10px;
+    line-height: 1.4;
+    height: 100%;
   }
 
-  .header {
-    text-align: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 3px solid #1d4ed8;
-  }
-
-  .header-top {
+  /* Cada acta ocupa exactamente una página */
+  .page-item {
+    height: 100vh;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ---- Encabezado ---- */
+  .header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    border-bottom: 1.5px solid #333;
+    flex-shrink: 0;
   }
 
   .header-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 8px;
   }
 
   .escudo {
-    width: 65px;
-    height: 65px;
+    width: 40px;
+    height: 40px;
     object-fit: contain;
-  }
-
-  .header-info {
-    text-align: left;
   }
 
   .inst-name {
     font-size: 9px;
-    color: #64748b;
-    letter-spacing: 1px;
-    margin-bottom: 0;
+    color: #222;
   }
 
-  .inst-name-bold {
-    font-size: 14px;
-    font-weight: 700;
-    color: #1e3a8a;
-    margin: 2px 0;
-    letter-spacing: 0.5px;
+  .inst-detail {
+    font-size: 7px;
+    color: #666;
+    margin-top: 1px;
   }
 
-  .inst-resolution, .inst-nit {
-    font-size: 8px;
-    color: #64748b;
-    margin: 1px 0;
-  }
-
-  .header-title {
-    margin-top: 10px;
-  }
-
-  .title-bar {
-    background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
-    padding: 8px 20px;
-    display: inline-block;
-    border-radius: 4px;
+  .header-right {
+    text-align: right;
   }
 
   .title-text {
-    color: white;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 2px;
-  }
-
-  .subtitle {
     font-size: 12px;
-    color: #334155;
-    margin-top: 10px;
-    font-weight: 500;
+    font-weight: 700;
+    color: #111;
+    letter-spacing: 1px;
   }
 
-  .period {
-    font-size: 10px;
-    color: #64748b;
-    margin-top: 3px;
-  }
-
-  .content-section {
-    margin-top: 10px;
-  }
-
-  .info-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 15px;
-  }
-
-  .info-header {
-    background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
-    color: white;
-    padding: 8px 15px;
-    font-size: 11px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .info-icon {
-    font-size: 14px;
-  }
-
-  .info-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0;
-  }
-
-  .info-item {
-    padding: 10px 12px;
-    border-right: 1px solid #e2e8f0;
-    border-bottom: 1px solid #e2e8f0;
-  }
-
-  .info-item:nth-child(3n) {
-    border-right: none;
-  }
-
-  .info-item:nth-last-child(-n+3) {
-    border-bottom: none;
-  }
-
-  .info-label {
-    display: block;
+  .title-sub {
     font-size: 8px;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 3px;
+    color: #555;
+    margin-top: 2px;
   }
 
-  .info-value {
+  /* ---- Tabla de datos ---- */
+  .info-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #aaa;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+
+  .info-cell {
+    border: 1px solid #ccc;
+    padding: 5px 8px;
+    width: 33.33%;
+  }
+
+  .lbl {
     display: block;
-    font-size: 11px;
-    color: #334155;
-    font-weight: 500;
+    font-size: 7.5px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 1px;
   }
 
-  .info-value.highlight {
-    color: #1d4ed8;
-    font-weight: 700;
-    font-size: 12px;
+  .val {
+    display: block;
+    font-size: 10px;
+    color: #222;
   }
 
-  .info-value.deadline {
-    color: #dc2626;
-    font-weight: 700;
-  }
+  .val.bold { font-weight: 700; }
 
-  .plan-card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 15px;
-  }
-
-  .plan-header {
-    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-    color: white;
-    padding: 8px 15px;
-    font-size: 11px;
-    font-weight: 600;
+  /* ---- Plan: crece para llenar todo el espacio disponible ---- */
+  .plan-section {
+    border: 1px solid #aaa;
+    flex: 1;
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
   }
 
-  .plan-icon {
-    font-size: 14px;
+  .plan-title {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 5px 8px;
+    border-bottom: 1px solid #aaa;
+    color: #222;
+    flex-shrink: 0;
   }
 
   .plan-content {
-    padding: 15px;
-    font-size: 11px;
-    line-height: 1.7;
-    color: #334155;
-    background: #f0fdf4;
+    padding: 8px 10px;
+    font-size: 10px;
+    line-height: 1.5;
+    color: #222;
     white-space: pre-wrap;
+    flex: 1;
+    overflow: hidden;
   }
 
-  .notice-box {
-    background: #fef3c7;
-    border: 1px solid #f59e0b;
-    border-radius: 6px;
-    padding: 12px 15px;
-    margin-top: 15px;
+  /* ---- Zona inferior fija: nota + firmas ---- */
+  .footer-zone {
+    flex-shrink: 0;
+    margin-top: 10px;
   }
 
-  .notice-title {
-    font-size: 11px;
-    font-weight: 700;
-    color: #92400e;
-    margin-bottom: 5px;
-  }
-
-  .notice-text {
-    font-size: 10px;
-    color: #78350f;
-    line-height: 1.6;
-  }
-
-  .firmas-section {
-    margin-top: 25px;
-    padding-top: 15px;
-    border-top: 2px dashed #e2e8f0;
-  }
-
-  .firmas-title {
-    text-align: center;
-    font-size: 10px;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 15px;
+  .notice {
+    font-size: 8px;
+    color: #555;
+    line-height: 1.4;
+    margin-bottom: 10px;
   }
 
   .firmas {
     display: flex;
     justify-content: space-between;
-    gap: 15px;
+    gap: 24px;
+    padding-top: 8px;
+    border-top: 1px dashed #aaa;
   }
 
   .firma {
@@ -387,38 +242,35 @@ export function generatePDF(items, escudoBase64) {
     text-align: center;
   }
 
-  .firma-box {
-    background: #f8fafc;
-    padding: 15px 10px 10px;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
-  }
-
-  .firma-box hr {
-    border: none;
-    border-top: 1px solid #1e3a8a;
-    margin-bottom: 8px;
+  .firma-line {
+    border-top: 1px solid #333;
+    margin-top: 30px;
+    margin-bottom: 4px;
   }
 
   .firma-label {
-    font-size: 9px;
-    color: #475569;
+    font-size: 8px;
+    color: #444;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
   }
 
   .page-break {
     page-break-after: always;
+    height: 0;
   }
 
   @media print {
-    body { 
-      -webkit-print-color-adjust: exact; 
-      print-color-adjust: exact; 
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page-item {
+      height: auto;
+      min-height: 100vh;
+      page-break-inside: avoid;
     }
-    .page-break {
-      page-break-after: always;
+    .plan-section {
+      flex: 1;
     }
+    .page-break { page-break-after: always; }
   }
 </style>
 </head>

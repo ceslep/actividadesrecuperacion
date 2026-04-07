@@ -1,12 +1,13 @@
 <script>
   import { onMount } from 'svelte'
   import { generatePDF } from '../lib/pdf.js'
+  import escudo from '../assets/escudo.png'
   import Spinner from './Spinner.svelte'
   import Icon from '@iconify/svelte'
-  import escudo from '../assets/escudo.png'
 
   let data = $state([])
   let loading = $state(true)
+  let escudoBase64 = $state('')
   let searchText = $state('')
   let filterGrupo = $state('')
   let filterDocente = $state('')
@@ -59,10 +60,8 @@
 
   let hasActiveFilters = $derived(searchText || filterGrupo || filterDocente)
 
-  let escudoBase64 = $state('')
-
   onMount(async () => {
-    const [, ] = await Promise.allSettled([
+    await Promise.allSettled([
       (async () => {
         try {
           const res = await fetch('https://app.iedeoccidente.com/gs/getgsartirec.php')
