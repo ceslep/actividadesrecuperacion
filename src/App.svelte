@@ -3,13 +3,36 @@
   import escudo from './assets/escudo.png'
   import { documentTitle, institutionHeader } from './lib/data.js'
   import Icon from '@iconify/svelte'
+  import Toast from './components/Toast.svelte'
 
   let currentView = $state('form')
   let FormComponent = $state(null)
   let DataList = $state(null)
+  let viewKey = $state(0)
+  let darkMode = $state(false)
+  let toastRef = $state(null)
+
+  // Persist dark mode preference
+  if (typeof window !== 'undefined') {
+    darkMode = localStorage.getItem('actirec-dark') === 'true' ||
+      (!localStorage.getItem('actirec-dark') && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  }
+
+  $effect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', darkMode)
+      document.body.classList.toggle('dark', darkMode)
+      localStorage.setItem('actirec-dark', darkMode)
+    }
+  })
+
+  function toggleDark() {
+    darkMode = !darkMode
+  }
 
   async function loadView(view) {
     currentView = view
+    viewKey++
     if (view === 'form' && !FormComponent) {
       FormComponent = (await import('./components/FormComponent.svelte')).default
     } else if (view === 'list' && !DataList) {
@@ -34,7 +57,8 @@
       icon: 'info',
       confirmButtonText: 'Cerrar',
       confirmButtonColor: '#2563eb',
-      background: '#fff',
+      background: darkMode ? '#1e293b' : '#fff',
+      color: darkMode ? '#e2e8f0' : '#1e293b',
       customClass: { popup: 'rounded-2xl' }
     })
   }
@@ -50,9 +74,23 @@
       <div class="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm p-1 shadow-lg ring-1 ring-white/20 shrink-0">
         <img src={escudo} alt="Escudo institucional" class="w-full h-full object-contain drop-shadow-lg" />
       </div>
-      <div>
+      <div class="flex-1">
         <p class="text-primary-200 text-xs font-medium tracking-wide uppercase whitespace-pre-line leading-tight">{institutionHeader}</p>
         <h1 class="text-white text-sm sm:text-base font-bold leading-snug">{documentTitle}</h1>
+      </div>
+      <div class="flex items-center gap-1">
+        <!-- Dark mode toggle -->
+        <button onclick={toggleDark}
+          class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-200 text-white/80 hover:text-white"
+          title={darkMode ? 'Modo claro' : 'Modo oscuro'}>
+          <Icon icon={darkMode ? 'mdi:white-balance-sunny' : 'mdi:moon-waning-crescent'} class="text-lg" />
+        </button>
+        <!-- About -->
+        <button onclick={showAbout}
+          class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-200 text-white/80 hover:text-white"
+          title="Acerca de">
+          <Icon icon="mdi:information-outline" class="text-lg" />
+        </button>
       </div>
     </div>
   </header>
@@ -62,32 +100,39 @@
     <div class="card inline-flex p-1.5 gap-1">
       <button
         onclick={() => loadView('form')}
-        class="px-6 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 {currentView === 'form' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}">
+        class="px-6 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 {currentView === 'form' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'}">
         <Icon icon="mdi:form-select" class="text-base" />
         Formulario
       </button>
       <button
         onclick={() => loadView('list')}
-        class="px-6 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 {currentView === 'list' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}">
+        class="px-6 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 {currentView === 'list' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'}">
         <Icon icon="mdi:format-list-bulleted" class="text-base" />
         Registros
       </button>
     </div>
   </div>
 
-  <!-- Main content -->
+  <!-- Main content with view transition -->
   <main class="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
-    {#if currentView === 'form' && FormComponent}
-      <FormComponent />
-    {:else if currentView === 'list' && DataList}
-      <DataList />
-    {/if}
+    {#key viewKey}
+      <div class="view-enter">
+        {#if currentView === 'form' && FormComponent}
+          <FormComponent toast={toastRef} />
+        {:else if currentView === 'list' && DataList}
+          <DataList />
+        {/if}
+      </div>
+    {/key}
   </main>
 
   <!-- Footer -->
-  <footer class="border-t border-slate-200/60 bg-white/40 backdrop-blur-sm">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 text-center text-xs text-slate-400">
+  <footer class="border-t border-slate-200/60 dark:border-slate-700/60 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm transition-colors duration-300">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 text-center text-xs text-slate-400 dark:text-slate-500">
       ActiRec &copy; {new Date().getFullYear()} &mdash; I.E. Oficial Instituto Guatica
     </div>
   </footer>
 </div>
+
+<!-- Global Toast component -->
+<Toast bind:this={toastRef} />

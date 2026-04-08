@@ -20,20 +20,26 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen font-sans text-slate-700 antialiased;
+    @apply bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen font-sans text-slate-700 antialiased
+           transition-colors duration-300;
+  }
+
+  .dark body,
+  body.dark {
+    @apply from-slate-950 to-slate-900 text-slate-200;
   }
 }
 
 @layer components {
   .field-label {
-    @apply text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1.5;
+    @apply text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5;
   }
 
   .field-input {
-    @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700
+    @apply w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 text-sm text-slate-700 dark:text-slate-200
            shadow-sm transition-all duration-200
-           placeholder:text-slate-400
-           hover:border-primary-300
+           placeholder:text-slate-400 dark:placeholder:text-slate-500
+           hover:border-primary-300 dark:hover:border-primary-500
            focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 focus:outline-none;
   }
 
@@ -55,10 +61,83 @@
   }
 
   .card {
-    @apply bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg shadow-slate-200/50 border border-white/60;
+    @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 border border-white/60 dark:border-slate-700/60
+           transition-colors duration-300;
   }
 
   .glass-nav {
-    @apply bg-white/70 backdrop-blur-xl border-b border-white/20 shadow-sm;
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-white/20 dark:border-slate-700/20 shadow-sm;
+  }
+
+  /* Staggered entrance animation */
+  .stagger-item {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: staggerIn 0.4s ease-out forwards;
+  }
+
+  /* Shake animation for invalid fields */
+  .shake {
+    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+
+  /* Check animation for completed fields */
+  .field-complete {
+    animation: fieldComplete 0.3s ease-out;
+  }
+
+  /* View transition */
+  .view-enter {
+    animation: viewSlideIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  .view-exit {
+    animation: viewSlideOut 0.2s ease-in forwards;
+  }
+}
+
+@keyframes staggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-3px); }
+  40%, 60% { transform: translateX(3px); }
+}
+
+@keyframes fieldComplete {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes viewSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes viewSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
   }
 }

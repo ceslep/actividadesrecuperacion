@@ -1,9 +1,11 @@
 <script>
   import { onMount } from 'svelte'
   import { fetchAsignaturas, fetchEstudiantes, fetchDocentes } from '../lib/data.js'
-  import Spinner from './Spinner.svelte'
+  import SkeletonLoader from './SkeletonLoader.svelte'
   import Icon from '@iconify/svelte'
   import Swal from 'sweetalert2'
+
+  let { toast = null } = $props()
 
   let estudiantes = $state([])
   let grupos = $state([])
@@ -20,6 +22,18 @@
   let planMejoramiento = $state('')
   let planesIndividuales = $state({})
   let loading = $state(false)
+
+  // Shake animation state
+  let shakeFields = $state({})
+
+  function triggerShake(fieldId) {
+    shakeFields[fieldId] = true
+    shakeFields = shakeFields
+    setTimeout(() => {
+      shakeFields[fieldId] = false
+      shakeFields = shakeFields
+    }, 500)
+  }
 
   let estudiantesFiltrados = $derived(
     grupo ? estudiantes.filter(e => e.grupo === grupo) : []
@@ -51,7 +65,7 @@
     if (new Date(fechaLimite) <= new Date(new Date().setHours(0, 0, 0, 0))) return false
 
     const allHaveIndividualPlan = estudiantesSeleccionados.every(name => studentsWithIndividualPlan.includes(name))
-    
+
     if (allHaveIndividualPlan) {
       return true
     }
@@ -100,13 +114,13 @@
       label: 'Estudiantes',
       value: estudiantesSeleccionados.length,
       completed: estudiantesSeleccionados.length > 0,
-      detail: estudiantesSeleccionados.length > 0 
+      detail: estudiantesSeleccionados.length > 0
         ? `${estudiantesSeleccionados.length} seleccionado${estudiantesSeleccionados.length > 1 ? 's' : ''}`
         : 'Sin estudiantes seleccionados'
     })
 
     const allHaveIndividualPlan = estudiantesSeleccionados.length > 0 && estudiantesSeleccionados.every(name => studentsWithIndividualPlan.includes(name))
-    
+
     if (!allHaveIndividualPlan) {
       items.push({
         id: 'plan',
@@ -168,7 +182,18 @@
   )
 
   async function handleSubmit() {
-    if (!grupo || !asignatura || !docenteSeleccionado || !fechaLimite) {
+    // Shake invalid fields
+    const fieldsToCheck = [
+      { id: 'grupo', valid: !!grupo },
+      { id: 'asignatura', valid: !!asignatura },
+      { id: 'docente', valid: !!docenteSeleccionado },
+      { id: 'fecha', valid: fechaLimite && new Date(fechaLimite) > new Date(new Date().setHours(0, 0, 0, 0)) },
+      { id: 'estudiantes', valid: estudiantesSeleccionados.length > 0 }
+    ]
+
+    const invalidFields = fieldsToCheck.filter(f => !f.valid)
+    if (invalidFields.length > 0) {
+      invalidFields.forEach(f => triggerShake(f.id))
       Swal.fire({
         title: 'Campos incompletos',
         text: 'Por favor completa todos los campos del formulario.',
@@ -179,6 +204,7 @@
     }
 
     if (estudiantesSeleccionados.length === 0) {
+      triggerShake('estudiantes')
       Swal.fire({
         title: 'Sin estudiantes',
         text: 'Debes seleccionar al menos un estudiante.',
@@ -192,10 +218,11 @@
     const hasGeneral = planMejoramiento.length >= 40
 
     if (!allHaveIndividualPlan && !hasGeneral) {
+      triggerShake('plan')
       Swal.fire({
         title: 'Plan incompleto',
-        text: estudiantesSeleccionados.length === 1 
-          ? 'Escribe un plan individual o un plan general (min 40 caracteres).' 
+        text: estudiantesSeleccionados.length === 1
+          ? 'Escribe un plan individual o un plan general (min 40 caracteres).'
           : 'El plan general es obligatorio si no todos tienen plan individual (min 40 caracteres).',
         icon: 'warning',
         confirmButtonColor: '#2563eb'
@@ -206,6 +233,7 @@
     const todayDate = new Date()
     todayDate.setHours(0, 0, 0, 0)
     if (new Date(fechaLimite) <= todayDate) {
+      triggerShake('fecha')
       Swal.fire({
         title: 'Fecha invalida',
         text: 'La fecha limite debe ser posterior a hoy.',
@@ -234,12 +262,17 @@
       })
 
       if (response.ok) {
-        Swal.fire({
-          title: 'Registrado',
-          text: 'El plan de mejoramiento se registro correctamente.',
-          icon: 'success',
-          confirmButtonColor: '#2563eb'
-        })
+        // Use toast instead of SweetAlert for success
+        if (toast?.show) {
+          toast.show('Plan de mejoramiento registrado correctamente.', 'success')
+        } else {
+          Swal.fire({
+            title: 'Registrado',
+            text: 'El plan de mejoramiento se registro correctamente.',
+            icon: 'success',
+            confirmButtonColor: '#2563eb'
+          })
+        }
         grupo = ''
         asignatura = ''
         docenteSeleccionado = ''
@@ -260,32 +293,29 @@
 </script>
 
 {#if loadingData}
-  <div class="flex flex-col items-center justify-center py-24 gap-4">
-    <Spinner size={48} color="#3b82f6" />
-    <p class="text-sm text-slate-400 animate-pulse">Cargando datos...</p>
-  </div>
+  <SkeletonLoader type="form" />
 {:else}
   <form onsubmit={(e) => { e.preventDefault(); handleSubmit() }} class="card p-6 sm:p-10 space-y-8">
     <!-- Validation Progress Bar (only when form is incomplete) -->
     {#if !isFormValid}
-      <div class="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 sm:pb-6 bg-gradient-to-b from-white via-white/95 to-transparent">
-        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 shadow-lg shadow-amber-100/50">
+      <div class="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 sm:pb-6 bg-gradient-to-b from-white dark:from-slate-800 via-white/95 dark:via-slate-800/95 to-transparent">
+        <div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/50 dark:to-orange-950/50 border border-amber-200 dark:border-amber-800 rounded-xl p-4 shadow-lg shadow-amber-100/50 dark:shadow-amber-900/20">
           <!-- Header with progress -->
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
-              <Icon icon="mdi:clipboard-check-outline" class="text-amber-600 text-lg" />
-              <span class="text-sm font-semibold text-amber-800">Progreso del formulario</span>
+              <Icon icon="mdi:clipboard-check-outline" class="text-amber-600 dark:text-amber-400 text-lg" />
+              <span class="text-sm font-semibold text-amber-800 dark:text-amber-200">Progreso del formulario</span>
             </div>
             <div class="flex items-center gap-3">
-              <span class="text-xs font-bold text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
+              <span class="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/50 px-2 py-1 rounded-full">
                 {completedCount}/{totalCount}
               </span>
-              <span class="text-xs font-bold text-amber-700">{progressPercent}%</span>
+              <span class="text-xs font-bold text-amber-700 dark:text-amber-300">{progressPercent}%</span>
             </div>
           </div>
 
           <!-- Progress bar -->
-          <div class="h-2 bg-amber-100 rounded-full overflow-hidden mb-3">
+          <div class="h-2 bg-amber-100 dark:bg-amber-900/50 rounded-full overflow-hidden mb-3">
             <div class="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-500 ease-out"
               style="width: {progressPercent}%"></div>
           </div>
@@ -293,8 +323,9 @@
           <!-- Items grid -->
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {#each validationItems as item}
-              <div class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs
-                {item.completed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-100/70 text-amber-800'}">
+              <div class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all duration-300
+                {item.completed ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300' : 'bg-amber-100/70 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'}
+                {item.completed ? 'field-complete' : ''}">
                 {#if item.completed}
                   <Icon icon="mdi:check-circle" class="text-emerald-500 text-base shrink-0" />
                 {:else}
@@ -302,7 +333,7 @@
                 {/if}
                 <div class="min-w-0">
                   <span class="font-medium">{item.label}:</span>
-                  <span class="ml-1 truncate {item.completed ? 'text-emerald-600' : 'text-amber-600'}">
+                  <span class="ml-1 truncate {item.completed ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}">
                     {item.detail || (item.completed ? 'Completado' : 'Requerido')}
                   </span>
                 </div>
@@ -315,14 +346,14 @@
     <!-- Section: Informacion General -->
     <div>
       <div class="flex items-center gap-2 mb-6">
-        <div class="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center">
-          <Icon icon="mdi:information-outline" class="text-primary-600 text-lg" />
+        <div class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
+          <Icon icon="mdi:information-outline" class="text-primary-600 dark:text-primary-400 text-lg" />
         </div>
-        <h2 class="text-base font-bold text-slate-800">Informacion general</h2>
+        <h2 class="text-base font-bold text-slate-800 dark:text-slate-100">Informacion general</h2>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div>
+        <div class:shake={shakeFields.grupo}>
           <label for="grupo" class="field-label">
             <Icon icon="mdi:google-classroom" class="text-sm text-slate-400" />
             Grupo
@@ -335,7 +366,7 @@
           </select>
         </div>
 
-        <div>
+        <div class:shake={shakeFields.asignatura}>
           <label for="asignatura" class="field-label">
             <Icon icon="mdi:book-open-variant" class="text-sm text-slate-400" />
             Asignatura
@@ -348,7 +379,7 @@
           </select>
         </div>
 
-        <div>
+        <div class:shake={shakeFields.docente}>
           <label for="docenteSeleccionado" class="field-label">
             <Icon icon="mdi:account-tie" class="text-sm text-slate-400" />
             Docente
@@ -361,7 +392,7 @@
           </select>
         </div>
 
-        <div>
+        <div class:shake={shakeFields.fecha}>
           <label for="fechaLimite" class="field-label">
             <Icon icon="mdi:calendar-clock" class="text-sm text-slate-400" />
             Fecha limite
@@ -372,24 +403,24 @@
     </div>
 
     <!-- Divider -->
-    <hr class="border-slate-100" />
+    <hr class="border-slate-100 dark:border-slate-700" />
 
     <!-- Section: Estudiantes -->
-    <div>
+    <div class:shake={shakeFields.estudiantes}>
       <div class="flex items-center gap-2 mb-6">
-        <div class="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
-          <Icon icon="mdi:account-group" class="text-violet-600 text-lg" />
+        <div class="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center">
+          <Icon icon="mdi:account-group" class="text-violet-600 dark:text-violet-400 text-lg" />
         </div>
-        <h2 class="text-base font-bold text-slate-800">Estudiantes</h2>
+        <h2 class="text-base font-bold text-slate-800 dark:text-slate-100">Estudiantes</h2>
         {#if !grupo}
-          <span class="text-xs text-slate-400 ml-auto">Seleccione un grupo primero</span>
+          <span class="text-xs text-slate-400 dark:text-slate-500 ml-auto">Seleccione un grupo primero</span>
         {/if}
       </div>
 
       {#if !grupo}
-        <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center">
-          <Icon icon="mdi:account-search" class="text-3xl text-slate-300 mx-auto mb-2" />
-          <p class="text-sm text-slate-400">Seleccione un grupo para ver los estudiantes</p>
+        <div class="rounded-xl border border-dashed border-slate-200 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800/50 p-8 text-center">
+          <Icon icon="mdi:account-search" class="text-3xl text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+          <p class="text-sm text-slate-400 dark:text-slate-500">Seleccione un grupo para ver los estudiantes</p>
         </div>
       {:else}
         <!-- Search -->
@@ -401,7 +432,7 @@
           </div>
           {#if estudiantesSeleccionados.length > 0}
             <button type="button" onclick={() => { planesIndividuales = {}; expandedStudent = null }}
-              class="px-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all duration-200 flex items-center gap-2 shrink-0">
+              class="px-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 flex items-center gap-2 shrink-0">
               <Icon icon="mdi:close-circle-outline" class="text-sm" />
               Limpiar seleccion
             </button>
@@ -409,36 +440,36 @@
         </div>
 
         <!-- Student list with inline textarea -->
-        <div class="rounded-xl border border-slate-200 bg-white max-h-[320px] overflow-y-auto divide-y divide-slate-50">
+        <div class="rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 max-h-[320px] overflow-y-auto divide-y divide-slate-50 dark:divide-slate-700">
           {#each estudiantesBuscados as est}
             {@const isSelected = estudiantesSeleccionados.includes(est.nombreCompleto)}
             {@const plan = planesIndividuales[est.nombreCompleto] || ''}
             {@const hasPlan = plan.length >= 40}
             {@const isExpanded = expandedStudent === est.nombreCompleto}
-            <div class="transition-colors duration-150 {isSelected ? 'bg-primary-50/60' : 'hover:bg-slate-50'}">
+            <div class="transition-colors duration-150 {isSelected ? 'bg-primary-50/60 dark:bg-primary-950/30' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}">
               <div class="flex items-center gap-3 px-4 py-3">
                 <!-- Checkbox -->
                 <button type="button" onclick={() => toggleStudent(est.nombreCompleto)}
                   class="w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all duration-200
-                    {isSelected ? 'bg-primary-600 border-primary-600' : 'border-slate-300 hover:border-primary-400'}">
+                    {isSelected ? 'bg-primary-600 border-primary-600' : 'border-slate-300 dark:border-slate-500 hover:border-primary-400'}">
                   {#if isSelected}
                     <Icon icon="mdi:check" class="text-white text-sm" />
                   {/if}
                 </button>
-                
+
                 <!-- Name -->
-                <span class="text-sm {isSelected ? 'text-primary-800 font-medium' : 'text-slate-600'} flex-1">
+                <span class="text-sm {isSelected ? 'text-primary-800 dark:text-primary-300 font-medium' : 'text-slate-600 dark:text-slate-300'} flex-1">
                   {est.nombreCompleto}
                 </span>
-                
+
                 <!-- Expand button -->
                 <button type="button" onclick={() => expandedStudent = expandedStudent === est.nombreCompleto ? null : est.nombreCompleto}
-                  class="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                  class="p-1 hover:bg-slate-100 dark:hover:bg-slate-600 rounded-lg transition-colors">
                   <Icon icon={isExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down'}
                     class="text-slate-400 text-lg" />
                 </button>
               </div>
-              
+
               {#if isExpanded || isSelected}
                 <div class="px-4 pb-4">
                   <textarea rows="4"
@@ -450,7 +481,7 @@
                     }}
                     class="field-input resize-y text-sm"></textarea>
                   <div class="mt-2 flex items-center gap-3">
-                    <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="flex-1 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                       <div class="h-full rounded-full transition-all duration-300"
                         class:bg-rose-400={!hasPlan && plan.length > 0}
                         class:bg-emerald-400={hasPlan}
@@ -469,7 +500,7 @@
             </div>
           {/each}
           {#if estudiantesBuscados.length === 0}
-            <div class="p-6 text-center text-sm text-slate-400">
+            <div class="p-6 text-center text-sm text-slate-400 dark:text-slate-500">
               No se encontraron estudiantes con "{studentSearch}"
             </div>
           {/if}
@@ -478,14 +509,14 @@
         <!-- Selected count -->
         {#if estudiantesSeleccionados.length > 0}
           <div class="mt-3 flex items-center gap-2 flex-wrap">
-            <span class="text-xs font-semibold text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full border border-primary-100">
+            <span class="text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-2.5 py-1 rounded-full border border-primary-100 dark:border-primary-800">
               {estudiantesSeleccionados.length} seleccionado{estudiantesSeleccionados.length > 1 ? 's' : ''}
             </span>
             {#each estudiantesSeleccionados as name}
-              <span class="inline-flex items-center gap-1 pl-2.5 pr-1 py-1 bg-slate-100 text-slate-600 text-xs rounded-full">
+              <span class="inline-flex items-center gap-1 pl-2.5 pr-1 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-full">
                 {name}
                 <button type="button" onclick={() => toggleStudent(name)}
-                  class="w-4 h-4 rounded-full hover:bg-slate-300 flex items-center justify-center transition-colors">
+                  class="w-4 h-4 rounded-full hover:bg-slate-300 dark:hover:bg-slate-500 flex items-center justify-center transition-colors">
                   <Icon icon="mdi:close" class="text-[10px]" />
                 </button>
               </span>
@@ -494,7 +525,7 @@
           {#if estudiantesSeleccionados.length > 1}
             {@const hasSomeIndividual = estudiantesSeleccionados.some(n => studentsWithIndividualPlan.includes(n))}
             {@const allHaveIndividualPlan = estudiantesSeleccionados.every(n => studentsWithIndividualPlan.includes(n))}
-            <div class="mt-2 text-xs {hasSomeIndividual ? 'text-violet-600 bg-violet-50 border border-violet-200' : 'text-slate-500'} rounded-lg px-3 py-2 flex items-start gap-2">
+            <div class="mt-2 text-xs {hasSomeIndividual ? 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/50 border border-violet-200 dark:border-violet-800' : 'text-slate-500 dark:text-slate-400'} rounded-lg px-3 py-2 flex items-start gap-2">
               <Icon icon="mdi:information-outline" class="text-base shrink-0 mt-0.5" />
               {#if allHaveIndividualPlan}
                 <span>Todos los estudiantes tienen <strong>plan individual</strong>. El plan general es opcional.</span>
@@ -510,15 +541,15 @@
     </div>
 
     <!-- Divider -->
-    <hr class="border-slate-100" />
+    <hr class="border-slate-100 dark:border-slate-700" />
 
     <!-- Section: Plan de mejoramiento -->
-    <div>
+    <div class:shake={shakeFields.plan}>
       <div class="flex items-center gap-2 mb-6">
-        <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-          <Icon icon="mdi:text-box-edit-outline" class="text-emerald-600 text-lg" />
+        <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center">
+          <Icon icon="mdi:text-box-edit-outline" class="text-emerald-600 dark:text-emerald-400 text-lg" />
         </div>
-        <h2 class="text-base font-bold text-slate-800">Plan de mejoramiento / Refuerzo</h2>
+        <h2 class="text-base font-bold text-slate-800 dark:text-slate-100">Plan de mejoramiento / Refuerzo</h2>
       </div>
 
       <!-- Plan general (siempre visible) -->
@@ -532,7 +563,7 @@
           class="field-input resize-y"></textarea>
 
         <div class="mt-2 flex items-center gap-3">
-          <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+          <div class="flex-1 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
             <div class="h-full rounded-full transition-all duration-300"
               class:bg-rose-400={charCount < 40}
               class:bg-emerald-400={charCount >= 40}
@@ -553,17 +584,17 @@
     <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
       {#if !isFormValid && !loading}
         {@const missingItems = validationItems.filter(i => !i.completed)}
-        <div class="flex items-center gap-2 text-xs text-slate-500">
+        <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <Icon icon="mdi:information-outline" class="text-slate-400" />
           <span>Completa:</span>
           {#each missingItems as item, i}
-            <span class="text-amber-600 font-medium">{item.label}{i < missingItems.length - 1 ? ',' : ''}</span>
+            <span class="text-amber-600 dark:text-amber-400 font-medium">{item.label}{i < missingItems.length - 1 ? ',' : ''}</span>
           {/each}
         </div>
       {/if}
       <button type="submit" disabled={loading || !isFormValid} class="btn-primary">
         {#if loading}
-          <Spinner size={18} color="white" />
+          <span class="submit-spinner"></span>
           Enviando...
         {:else}
           <Icon icon="mdi:send-variant" class="text-base" />
@@ -573,3 +604,18 @@
     </div>
   </form>
 {/if}
+
+<style>
+  .submit-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
