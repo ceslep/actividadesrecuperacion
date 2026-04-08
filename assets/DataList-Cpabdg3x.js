@@ -1,4 +1,4 @@
-import{C as Ae,D as Ie,d as $e,s as _,p as Ce,o as Ee,h as u,E as Fe,I as y,l,i as T,k as t,w as J,a as d,b as Le,z as w,y as i,t as D,u as b,A as K,x as c,j as Se}from"./index-Bw41RFiE.js";import{e as F,b as Ne,S as Ge,i as L}from"./Spinner-BEtOz4p4.js";function Q(o){try{return new Date(o).toLocaleDateString("es-CO",{year:"numeric",month:"long",day:"numeric"})}catch{return o}}function Pe(o){return`
+import{C as Ae,D as Ie,d as $e,s as _,p as Ce,o as Ee,h as u,E as Fe,I as y,l,i as T,k as t,w as J,a as d,b as Le,z as w,y as i,t as D,u as b,A as K,x as c,j as Se}from"./index-DCcnfLwf.js";import{e as F,b as Ne,S as Ge,i as L}from"./Spinner-Cug8ILpB.js";function Q(o){try{return new Date(o).toLocaleDateString("es-CO",{year:"numeric",month:"long",day:"numeric"})}catch{return o}}function Pe(o){return`
   <div class="header">
     <div class="header-left">
       ${o?`<img src="${o}" alt="Escudo" class="escudo">`:""}
