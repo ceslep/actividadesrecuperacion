@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import { asignaturas, fetchEstudiantes, fetchDocentes } from '../lib/data.js'
+  import { fetchAsignaturas, fetchEstudiantes, fetchDocentes } from '../lib/data.js'
   import Spinner from './Spinner.svelte'
   import Icon from '@iconify/svelte'
   import Swal from 'sweetalert2'
@@ -8,6 +8,7 @@
   let estudiantes = $state([])
   let grupos = $state([])
   let docentesList = $state([])
+  let asignaturas = $state([])
   let loadingData = $state(true)
 
   const today = new Date().toISOString().split('T')[0]
@@ -140,10 +141,11 @@
 
   onMount(async () => {
     try {
-      const [estData, docData] = await Promise.all([fetchEstudiantes(), fetchDocentes()])
+      const [estData, docData, matData] = await Promise.all([fetchEstudiantes(), fetchDocentes(), fetchAsignaturas()])
       estudiantes = estData.estudiantes
       grupos = estData.grupos
       docentesList = docData
+      asignaturas = matData
     } catch (err) {
       console.error('Error cargando datos:', err)
       Swal.fire({

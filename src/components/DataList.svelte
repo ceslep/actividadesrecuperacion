@@ -98,6 +98,11 @@
     const studentRecords = filteredData.filter(d => d.estudiante === item.estudiante)
     generatePDF(studentRecords, escudoBase64)
   }
+
+  function handleGenerateGroupPDF() {
+    const sorted = [...filteredData].sort((a, b) => a.estudiante.localeCompare(b.estudiante))
+    generatePDF(sorted, escudoBase64)
+  }
 </script>
 
 <div class="space-y-6">
@@ -120,6 +125,13 @@
           class="text-xs font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors">
           <Icon icon="mdi:filter-remove" class="text-sm" />
           Limpiar filtros
+        </button>
+      {/if}
+      {#if filterGrupo && filteredData.length > 0}
+        <button onclick={handleGenerateGroupPDF}
+          class="btn-danger text-xs flex items-center gap-1">
+          <Icon icon="mdi:file-pdf-box" class="text-sm" />
+          PDF Grupo {filterGrupo} ({filteredData.length} planes)
         </button>
       {/if}
     </div>

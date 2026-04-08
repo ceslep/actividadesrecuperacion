@@ -1,22 +1,8 @@
-export const asignaturas = [
-  "CÁTEDRA DE LA PAZ",
-  "CIENCIAS NATURALES Y EDUCACION AMBIENTAL",
-  "CIENCIAS SOCIALES (HISTORIA, GEOGRAFÍA Y CONSTITUCION)",
-  "EDUCACIÓN ARTÍSTICA",
-  "EDUCACIÓN FÍSICA, RECREACIÓN Y DEPORTES",
-  "EDUCACIÓN RELIGIOSA, ÉTICA Y V. HUMANOS",
-  "EMPRENDIMIENTO",
-  "ESTADÍSTICA",
-  "FILOSOFÍA Y CIENCIAS SOCIALES (CIENCIAS",
-  "FÍSICA",
-  "INGLÉS",
-  "LENGUA CASTELLANA",
-  "MATEMÁTICAS",
-  "PROYECTO Y EMPRENDIMIENTO",
-  "QUÍMICA",
-  "TECNOLOGÍA E INFORMÁTICA",
-  "ÉTICA PROFESIONAL"
-]
+export async function fetchAsignaturas() {
+  const res = await fetch('https://app.iedeoccidente.com/ig/getMaterias.php')
+  const data = await res.json()
+  return data.map(m => m.materia)
+}
 
 // --- Configuración del período académico ---
 export const periodoConfig = {
