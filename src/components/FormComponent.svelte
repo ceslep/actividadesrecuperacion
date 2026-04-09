@@ -160,6 +160,12 @@
       grupos = estData.grupos
       docentesList = docData
       asignaturas = matData
+
+      const params = new URLSearchParams(window.location.search)
+      const teacherParam = params.get('teacher')
+      if (teacherParam && docentesList.includes(teacherParam)) {
+        docenteSeleccionado = teacherParam
+      }
     } catch (err) {
       console.error('Error cargando datos:', err)
       Swal.fire({
